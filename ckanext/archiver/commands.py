@@ -15,6 +15,9 @@ except ImportError:
 from sqlalchemy.sql import func
 
 from ckan.lib.cli import CkanCommand
+from ckan.lib import jobs
+from ckanext.archiver.tasks import update_package, update_resource
+
 
 REQUESTS_HEADER = {'content-type': 'application/json'}
 
@@ -159,14 +162,18 @@ class Archiver(CkanCommand):
                 package = pkg_or_res
                 self.log.info('Queuing dataset %s (%s resources)',
                               package.name, num_resources_for_pkg)
-                lib.create_archiver_package_task(package, self.options.queue)
+                jobs.enqueue(
+                    update_package, [self.options.config, package.id],
+                    {'queue': self.options.queue})
                 time.sleep(0.1)  # to try to avoid Redis getting overloaded
             else:
                 resource = pkg_or_res
                 package = pkg_for_res
                 self.log.info('Queuing resource %s/%s',
                               package.name, resource.id)
-                lib.create_archiver_resource_task(resource, self.options.queue)
+                jobs.enqueue(
+                    update_resource, [self.options.config, resource.id],
+                    {'queue': self.options.queue})
                 time.sleep(0.05)  # to try to avoid Redis getting overloaded
         self.log.info('Completed queueing')
 

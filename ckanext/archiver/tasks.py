@@ -135,13 +135,14 @@ class CkanError(ArchiverError):
     pass
 
 
-def update_resource(ckan_ini_filepath, resource_id, queue='bulk'):
+def update_resource(ckan_ini_filepath, resource_id, queue='bulk', logger=None):
     '''
     Archive a resource.
     '''
     load_config(ckan_ini_filepath)
     register_translator()
 
+    log = logging.getLogger(logger)
     log.info('Starting update_resource task: res_id=%r queue=%s', resource_id, queue)
 
     # HACK because of race condition #1481
@@ -162,13 +163,14 @@ def update_resource(ckan_ini_filepath, resource_id, queue='bulk'):
         raise
 
 
-def update_package(ckan_ini_filepath, package_id, queue='bulk'):
+def update_package(ckan_ini_filepath, package_id, queue='bulk', logger=None):
     '''
     Archive a package.
     '''
     load_config(ckan_ini_filepath)
     register_translator()
 
+    log = logging.getLogger(logger)
     log.info('Starting update_package task: package_id=%r queue=%s',
              package_id, queue)
 
@@ -344,7 +346,7 @@ def _update_resource(ckan_ini_filepath, resource_id, queue, log):
         'previous': Archival.get_for_resource(resource_id)
         }
     try:
-        download_result = download(context, resource)
+        download_result = download(context, resource, log=log)
     except NotChanged, e:
         download_status_id = Status.by_text('Content has not changed')
         try_as_api = False
@@ -374,7 +376,7 @@ def _update_resource(ckan_ini_filepath, resource_id, queue, log):
                  resource.get('url'))
 
         if try_as_api:
-            download_result = api_request(context, resource)
+            download_result = api_request(context, resource, log)
             if download_result:
                 download_status_id = Status.by_text('Archived successfully')
             # else the download_status_id (i.e. an error) is left what it was
@@ -408,7 +410,7 @@ def _update_resource(ckan_ini_filepath, resource_id, queue, log):
 
 def download(context, resource, url_timeout=30,
              max_content_length='default',
-             method='GET'):
+             method='GET', log=None):
     '''Given a resource, tries to download it.
 
     Params:
@@ -878,7 +880,7 @@ def wfs_request(context, resource):
     return res
 
 
-def api_request(context, resource):
+def api_request(context, resource, log):
     '''
     Tries making requests as if the resource is a well-known sort of API to try
     and get a valid response. If it does it returns the response, otherwise
