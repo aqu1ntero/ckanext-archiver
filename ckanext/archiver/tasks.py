@@ -782,8 +782,9 @@ def save_archival(resource, status_id, reason, url_redirected_to,
         archival.size = download_result['size']
         archival.mimetype = download_result['mimetype']
         archival.hash = download_result['hash']
-        archival.etag = download_result['headers'].get('etag')
-        archival.last_modified = download_result['headers'].get('last-modified')
+        if download_result['headers']:
+            archival.etag = download_result['headers'].get('etag')
+            archival.last_modified = download_result['headers'].get('last-modified')
 
     # History
     if archival.is_broken is False:
