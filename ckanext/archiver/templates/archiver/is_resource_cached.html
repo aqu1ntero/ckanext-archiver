@@ -34,12 +34,11 @@ and all the Archival.as_dict() info from the package_show's resource['archiver']
 #}
 <div class="archiver {% if cache_url %}link-cached{% else %}link-not-cached{% endif %}">
   {%- if cache_url -%}
-    <a href="{{ cache_url }}">
+    <a href="{{ cache_url }}" class="Button Button--inverse Button--small u-mb1 u-mr2">
       <span class="icon icon-download-alt"></span>
-      {% trans %}Download cached copy{% endtrans %}
-    </a><br>
-    {% trans %}Size{% endtrans %}: {{ size|filesizeformat }} <br>
-    {% trans %}Cached on{% endtrans %}: {{ h.render_datetime(last_success) }}
+      {% trans %}Download cached copy{% endtrans %} ({{ size|filesizeformat }})
+    </a>
+    <span class="Status-archiver Status Status--enlaceRoto" style="display: none;">Enlace roto</span>
     {% if is_broken %}
       ({% trans %}before it was broken{% endtrans %})
     {% endif %}<br>
